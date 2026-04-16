@@ -1,0 +1,9 @@
+{
+  "ngVersion": "21.0.0",
+  "providedIn": "root",
+  "useSingleRequestParameter": true,
+  "stringEnums": true,
+  "enumUnknownDefaultCase": true,
+  "fileNaming": "kebab-case",
+  "modelPropertyNaming": "original"
+}
