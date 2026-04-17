@@ -10,6 +10,8 @@ import { RecipientSurveyQuestionDto } from '../../../../core/api/generated/model
 import { RecipientSurveySectionDto } from '../../../../core/api/generated/model/recipient-survey-section-dto';
 import { SurveySessionBootstrapDto } from '../../../../core/api/generated/model/survey-session-bootstrap-dto';
 import { SurveySessionStoreService } from '../../services/survey-session-store.service';
+import { AwsService } from '../../../../core/services/aws.service';
+import { AttachmentModelDTO } from '../../../../core/api/generated/model/attachment-model-dto';
 
 type QuestionAnswerState = {
   attachmentIds: number[];
@@ -38,6 +40,7 @@ export class SurveyStartPageComponent {
   private readonly router = inject(Router);
   private readonly api = inject(SurveyLinksSecurityApiService);
   private readonly sessionStore = inject(SurveySessionStoreService);
+  private readonly awsService = inject(AwsService);
 
   protected readonly pageState = signal<StartPageState>('loading');
   protected readonly loadingLabel = signal('Loading survey...');
@@ -45,6 +48,8 @@ export class SurveyStartPageComponent {
   protected readonly answers = signal<Record<string, QuestionAnswerState>>({});
   protected readonly currentSectionIndex = signal(0);
   protected readonly resumedSession = signal(false);
+  protected readonly uploadingQuestions = signal<Set<string>>(new Set());
+  protected readonly questionAttachmentDtos = signal<Record<string, AttachmentModelDTO[]>>({});
 
   protected readonly distribution = computed(
     () => this.bootstrap()?.distribution ?? null,
@@ -193,6 +198,83 @@ export class SurveyStartPageComponent {
 
   protected updateTextValue(questionId: string, textValue: string): void {
     this.updateAnswer(questionId, { textValue });
+  }
+
+  protected getQuestionAttachmentDtos(questionId: string): AttachmentModelDTO[] {
+    return this.questionAttachmentDtos()[questionId] ?? [];
+  }
+
+  protected isQuestionUploading(questionId: string): boolean {
+    return this.uploadingQuestions().has(questionId);
+  }
+
+  protected canUploadMore(question: RecipientSurveyQuestionDto): boolean {
+    if (!question.maxAttachments) return true;
+    return (
+      this.getQuestionAnswer(question.questionInstanceId).attachmentIds.length <
+      question.maxAttachments
+    );
+  }
+
+  protected getPreExistingAttachmentCount(questionId: string): number {
+    const totalIds = this.getQuestionAnswer(questionId).attachmentIds.length;
+    const uploadedCount = this.getQuestionAttachmentDtos(questionId).length;
+    return Math.max(0, totalIds - uploadedCount);
+  }
+
+  protected async uploadAttachmentFiles(
+    questionId: string,
+    event: Event,
+    maxAttachments?: number,
+  ): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const currentIds = this.getQuestionAnswer(questionId).attachmentIds;
+    const remaining = maxAttachments ? maxAttachments - currentIds.length : Infinity;
+    const filesToUpload = Array.from(input.files).slice(0, remaining);
+
+    if (!filesToUpload.length) return;
+
+    this.uploadingQuestions.update((set) => new Set([...set, questionId]));
+
+    try {
+      const fileWrappers = filesToUpload.map((f) => ({ file: { rawFile: f } }));
+      const attachments = await this.awsService.uploadFileToB12(fileWrappers);
+
+      console.log('[Upload] Attachments registered for question', questionId, attachments);
+
+      this.questionAttachmentDtos.update((current) => ({
+        ...current,
+        [questionId]: [...(current[questionId] ?? []), ...attachments],
+      }));
+
+      const newIds = attachments
+        .map((a) => a.id)
+        .filter((id): id is number => id != null);
+      this.updateAnswer(questionId, { attachmentIds: [...currentIds, ...newIds] });
+    } catch (error) {
+      console.error('[Upload] Failed for question', questionId, error);
+    } finally {
+      this.uploadingQuestions.update((set) => {
+        const next = new Set(set);
+        next.delete(questionId);
+        return next;
+      });
+      input.value = '';
+    }
+  }
+
+  protected removeAttachmentFromQuestion(questionId: string, attachmentId: number): void {
+    this.questionAttachmentDtos.update((current) => ({
+      ...current,
+      [questionId]: (current[questionId] ?? []).filter((a) => a.id !== attachmentId),
+    }));
+
+    const currentIds = this.getQuestionAnswer(questionId).attachmentIds;
+    this.updateAnswer(questionId, {
+      attachmentIds: currentIds.filter((id) => id !== attachmentId),
+    });
   }
 
   protected goToSection(sectionIndex: number): void {

@@ -185,15 +185,68 @@
             }
 
             @if (isAttachmentQuestion(question)) {
-              <div
-                class="mt-4 rounded-[10px] border border-dashed border-[#DCE4EE] px-4 py-5 text-[14px] leading-6 text-[#98A2B3]"
-              >
-                {{ getQuestionAnswer(question.questionInstanceId).attachmentIds.length }}
-                attachment(s) linked
-                @if (question.maxAttachments) {
-                  <span> out of {{ question.maxAttachments }}</span>
+              <div class="mt-4 space-y-2">
+                @if (getPreExistingAttachmentCount(question.questionInstanceId) > 0) {
+                  <p class="text-[13px] text-[#667085]">
+                    {{ getPreExistingAttachmentCount(question.questionInstanceId) }} previously attached file(s)
+                  </p>
                 }
-                .
+
+                @for (attachment of getQuestionAttachmentDtos(question.questionInstanceId); track attachment.id) {
+                  <div class="flex items-center justify-between rounded-[10px] border border-[#E5ECF5] bg-[#F8FAFC] px-4 py-2.5">
+                    <span class="mr-2 truncate text-[14px] text-[#475467]">
+                      {{ attachment.fileName }}
+                    </span>
+                    <button
+                      type="button"
+                      class="shrink-0 text-[#98A2B3] transition-colors hover:text-[#D16349]"
+                      [attr.aria-label]="'Remove ' + attachment.fileName"
+                      (click)="removeAttachmentFromQuestion(question.questionInstanceId, attachment.id!)"
+                    >
+                      &#10005;
+                    </button>
+                  </div>
+                }
+
+                @if (canUploadMore(question)) {
+                  <label
+                    [class]="
+                      'block ' +
+                      (isQuestionUploading(question.questionInstanceId)
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'cursor-pointer')
+                    "
+                  >
+                    <input
+                      type="file"
+                      class="sr-only"
+                      multiple
+                      [disabled]="isQuestionUploading(question.questionInstanceId)"
+                      (change)="uploadAttachmentFiles(question.questionInstanceId, $event, question.maxAttachments)"
+                    />
+                    <span
+                      [class]="
+                        'flex items-center justify-center rounded-[10px] border border-dashed px-4 py-4 text-[14px] font-medium transition-colors ' +
+                        (isQuestionUploading(question.questionInstanceId)
+                          ? 'border-[#DCE4EE] text-[#C5CCD8]'
+                          : 'border-[#2F80ED] text-[#2F80ED] hover:bg-[#F7FBFF]')
+                      "
+                    >
+                      @if (isQuestionUploading(question.questionInstanceId)) {
+                        Uploading&#8230;
+                      } @else {
+                        + Attach a file
+                      }
+                    </span>
+                  </label>
+                }
+
+                @if (question.maxAttachments) {
+                  <p class="text-[12px] text-[#98A2B3]">
+                    {{ getQuestionAnswer(question.questionInstanceId).attachmentIds.length }}
+                    of {{ question.maxAttachments }} files attached
+                  </p>
+                }
               </div>
             }
           </article>
