@@ -56,7 +56,12 @@
       <section class="mt-4 space-y-5">
         @for (question of visibleQuestions(); track question.questionInstanceId) {
           <article
-            class="rounded-[16px] border border-[#E5ECF5] bg-white p-4 sm:p-5"
+            [class]="
+              'rounded-[16px] border bg-white p-4 sm:p-5 ' +
+              (isQuestionMissing(question)
+                ? 'border-[#D16349]'
+                : 'border-[#E5ECF5]')
+            "
           >
             <div class="flex items-start justify-between gap-4">
               <div>
@@ -260,6 +265,14 @@
           </article>
         }
       </section>
+
+      @if (submitError()) {
+        <div
+          class="mt-6 rounded-[14px] border border-[#F3C8BD] bg-[#FFF4EF] px-4 py-3 text-[14px] leading-6 text-[#B4432E]"
+        >
+          {{ submitError() }}
+        </div>
+      }
     } @else {
       <article
         class="mt-10 rounded-[16px] border border-[#E5ECF5] bg-white px-5 py-8 text-center text-[15px] leading-7 text-[#667085]"
@@ -274,14 +287,25 @@
       <div
         class="mx-auto flex max-w-[1280px] items-center justify-between px-5 py-3 sm:px-6 lg:px-8"
       >
-        <button
-          type="button"
-          class="text-[15px] font-medium text-[#667085] disabled:text-[#C5CCD8]"
-          [disabled]="!canGoToNextSection()"
-          (click)="goToNextSection()"
-        >
-          Next Section
-        </button>
+        @if (isOnLastSection()) {
+          <button
+            type="button"
+            class="rounded-[10px] bg-[#2F80ED] px-5 py-2 text-[15px] font-semibold text-white transition-colors hover:bg-[#1F6FD8] disabled:cursor-not-allowed disabled:bg-[#9CC1F0]"
+            [disabled]="isSubmitting()"
+            (click)="submit()"
+          >
+            {{ isSubmitting() ? 'Submitting...' : 'Submit Survey' }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="text-[15px] font-medium text-[#667085] disabled:text-[#C5CCD8]"
+            [disabled]="!canGoToNextSection()"
+            (click)="goToNextSection()"
+          >
+            Next Section
+          </button>
+        }
 
         <div class="flex items-center gap-2">
           <button

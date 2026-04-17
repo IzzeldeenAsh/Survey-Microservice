@@ -12,6 +12,9 @@ import { SurveySessionBootstrapDto } from '../../../../core/api/generated/model/
 import { SurveySessionStoreService } from '../../services/survey-session-store.service';
 import { AwsService } from '../../../../core/services/aws.service';
 import { AttachmentModelDTO } from '../../../../core/api/generated/model/attachment-model-dto';
+import { SurveyDistributionResponseService } from '../../../../core/api/generated/api/survey-distribution-response.service';
+import { SubmitSurveyAnswerDto } from '../../../../core/api/generated/model/submit-survey-answer-dto';
+import { SubmitSurveyResponseDto } from '../../../../core/api/generated/model/submit-survey-response-dto';
 
 type QuestionAnswerState = {
   attachmentIds: number[];
@@ -41,6 +44,7 @@ export class SurveyStartPageComponent {
   private readonly api = inject(SurveyLinksSecurityApiService);
   private readonly sessionStore = inject(SurveySessionStoreService);
   private readonly awsService = inject(AwsService);
+  private readonly submitApi = inject(SurveyDistributionResponseService);
 
   protected readonly pageState = signal<StartPageState>('loading');
   protected readonly loadingLabel = signal('Loading survey...');
@@ -50,6 +54,9 @@ export class SurveyStartPageComponent {
   protected readonly resumedSession = signal(false);
   protected readonly uploadingQuestions = signal<Set<string>>(new Set());
   protected readonly questionAttachmentDtos = signal<Record<string, AttachmentModelDTO[]>>({});
+  protected readonly isSubmitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
+  protected readonly showValidationErrors = signal(false);
 
   protected readonly distribution = computed(
     () => this.bootstrap()?.distribution ?? null,
@@ -107,6 +114,40 @@ export class SurveyStartPageComponent {
     const sections = this.sections();
     return this.currentSectionIndex() < sections.length - 1;
   });
+  protected readonly isOnLastSection = computed(() => {
+    const sections = this.sections();
+    return sections.length > 0 && this.currentSectionIndex() === sections.length - 1;
+  });
+  protected readonly unansweredRequiredQuestions = computed<
+    { sectionIndex: number; question: RecipientSurveyQuestionDto }[]
+  >(() => {
+    const distribution = this.distribution();
+    if (!distribution?.sections?.length) {
+      return [];
+    }
+
+    const sections = this.sortSections(distribution.sections);
+    const result: { sectionIndex: number; question: RecipientSurveyQuestionDto }[] = [];
+
+    sections.forEach((section, sectionIndex) => {
+      for (const question of this.sortQuestions(section.questions ?? [])) {
+        if (!question.isMandatory) {
+          continue;
+        }
+        if (!this.isQuestionVisible(question)) {
+          continue;
+        }
+        if (!this.isQuestionAnswered(question)) {
+          result.push({ sectionIndex, question });
+        }
+      }
+    });
+
+    return result;
+  });
+  protected readonly canSubmit = computed(
+    () => this.unansweredRequiredQuestions().length === 0,
+  );
 
   constructor() {
     effect(() => {
@@ -168,6 +209,38 @@ export class SurveyStartPageComponent {
 
   protected isAttachmentQuestion(question: RecipientSurveyQuestionDto): boolean {
     return question.type === QUESTION_TYPE.attachment;
+  }
+
+  protected isQuestionAnswered(question: RecipientSurveyQuestionDto): boolean {
+    const answer = this.getQuestionAnswer(question.questionInstanceId);
+
+    if (this.isRatingQuestion(question)) {
+      return answer.ratingValue !== null;
+    }
+    if (
+      this.isSingleChoiceQuestion(question) ||
+      this.isMultipleChoiceQuestion(question)
+    ) {
+      return answer.selectedChoiceIds.length > 0;
+    }
+    if (this.isTextQuestion(question)) {
+      return answer.textValue.trim() !== '';
+    }
+    if (this.isAttachmentQuestion(question)) {
+      return answer.attachmentIds.length > 0;
+    }
+
+    return true;
+  }
+
+  protected isQuestionMissing(question: RecipientSurveyQuestionDto): boolean {
+    if (!this.showValidationErrors()) {
+      return false;
+    }
+    if (!question.isMandatory) {
+      return false;
+    }
+    return !this.isQuestionAnswered(question);
   }
 
   protected isSelected(
@@ -299,6 +372,104 @@ export class SurveyStartPageComponent {
     }
 
     this.currentSectionIndex.update((currentIndex) => currentIndex + 1);
+  }
+
+  protected async submit(): Promise<void> {
+    if (this.isSubmitting()) {
+      return;
+    }
+
+    const distribution = this.distribution();
+    if (!distribution) {
+      return;
+    }
+
+    if (this.uploadingQuestions().size > 0) {
+      this.submitError.set('Please wait for file uploads to finish before submitting.');
+      return;
+    }
+
+    const unanswered = this.unansweredRequiredQuestions();
+    if (unanswered.length > 0) {
+      this.showValidationErrors.set(true);
+      this.submitError.set(
+        `Please answer all required questions (${unanswered.length} remaining).`,
+      );
+      this.currentSectionIndex.set(unanswered[0].sectionIndex);
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.submitError.set(null);
+
+    try {
+      const input: SubmitSurveyResponseDto = {
+        distributionId: distribution.distributionId,
+        answers: this.buildSubmitAnswers(),
+      };
+
+      await firstValueFrom(
+        this.submitApi.apiSurveyDistributionResponseSubmitResponsePost({ input }),
+      );
+
+      this.sessionStore.clearToken();
+      await this.navigateToCompleted();
+    } catch (error) {
+      const message = this.extractErrorMessage(error);
+      this.submitError.set(
+        message || 'Failed to submit survey. Please try again.',
+      );
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
+  private buildSubmitAnswers(): SubmitSurveyAnswerDto[] {
+    const distribution = this.distribution();
+    if (!distribution?.sections?.length) {
+      return [];
+    }
+
+    const result: SubmitSurveyAnswerDto[] = [];
+
+    for (const section of distribution.sections) {
+      for (const question of section.questions ?? []) {
+        if (!this.isQuestionVisible(question)) {
+          continue;
+        }
+
+        const answer = this.getQuestionAnswer(question.questionInstanceId);
+        const dto: SubmitSurveyAnswerDto = {
+          questionInstanceId: question.questionInstanceId,
+        };
+
+        if (this.isRatingQuestion(question) && answer.ratingValue !== null) {
+          dto.ratingValue = answer.ratingValue;
+        } else if (
+          (this.isSingleChoiceQuestion(question) ||
+            this.isMultipleChoiceQuestion(question)) &&
+          answer.selectedChoiceIds.length > 0
+        ) {
+          dto.selectedChoiceIds = [...answer.selectedChoiceIds];
+        } else if (
+          this.isTextQuestion(question) &&
+          answer.textValue.trim() !== ''
+        ) {
+          dto.textValue = answer.textValue;
+        } else if (
+          this.isAttachmentQuestion(question) &&
+          answer.attachmentIds.length > 0
+        ) {
+          dto.attachmentIds = [...answer.attachmentIds];
+        } else {
+          continue;
+        }
+
+        result.push(dto);
+      }
+    }
+
+    return result;
   }
 
   private async initialize(): Promise<void> {
@@ -434,6 +605,10 @@ export class SurveyStartPageComponent {
     };
 
     this.answers.set(this.clearHiddenAnswers(nextAnswers));
+
+    if (this.submitError()) {
+      this.submitError.set(null);
+    }
   }
 
   private clearHiddenAnswers(
