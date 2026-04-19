@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AttachmentDto } from './attachment-dto';
 
 
 export interface SubmitSurveyAnswerDto { 
@@ -14,6 +15,6 @@ export interface SubmitSurveyAnswerDto {
     ratingValue?: number;
     textValue?: string;
     selectedChoiceIds?: Array<string>;
-    attachmentIds?: Array<number>;
+    attachments?: Array<AttachmentDto>;
 }
 

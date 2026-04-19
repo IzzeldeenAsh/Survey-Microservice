@@ -24,6 +24,8 @@ export interface ItemRequestDTO {
     conversationId?: number;
     messageId?: number;
     description?: string;
+    creatorUserId?: number;
+    creatorUserName?: string;
 }
 export enum ItemRequestDTORequestStateEnum {
     NUMBER_1 = 1,

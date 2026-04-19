@@ -21,6 +21,8 @@ import { RecipientSurveyDistributionDto } from '../model/recipient-survey-distri
 // @ts-ignore
 import { RecipientSurveyDistributionListItemDto } from '../model/recipient-survey-distribution-list-item-dto';
 // @ts-ignore
+import { RecipientSurveyLaunchUrlDto } from '../model/recipient-survey-launch-url-dto';
+// @ts-ignore
 import { SubmitSurveyResponseDto } from '../model/submit-survey-response-dto';
 // @ts-ignore
 import { SubmitSurveyResponseResultDto } from '../model/submit-survey-response-result-dto';
@@ -32,6 +34,10 @@ import { BaseService } from '../api.base.service';
 
 
 export interface ApiSurveyDistributionResponseDistributionByDistributionIdGetRequestParams {
+    distributionId: string;
+}
+
+export interface ApiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGetRequestParams {
     distributionId: string;
 }
 
@@ -101,6 +107,62 @@ export class SurveyDistributionResponseService extends BaseService {
         let localVarPath = `/api/surveyDistributionResponse/distribution/${this.configuration.encodeParam({name: "distributionId", value: distributionId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<RecipientSurveyDistributionDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @param requestParameters
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public apiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGet(requestParameters: ApiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGetRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<RecipientSurveyLaunchUrlDto>;
+    public apiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGet(requestParameters: ApiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGetRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RecipientSurveyLaunchUrlDto>>;
+    public apiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGet(requestParameters: ApiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGetRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RecipientSurveyLaunchUrlDto>>;
+    public apiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGet(requestParameters: ApiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGetRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const distributionId = requestParameters?.distributionId;
+        if (distributionId === null || distributionId === undefined) {
+            throw new Error('Required parameter distributionId was null or undefined when calling apiSurveyDistributionResponseDistributionLaunchUrlByDistributionIdGet.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/plain',
+            'application/json',
+            'text/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/surveyDistributionResponse/distributionLaunchUrl/${this.configuration.encodeParam({name: "distributionId", value: distributionId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RecipientSurveyLaunchUrlDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -201,6 +263,57 @@ export class SurveyDistributionResponseService extends BaseService {
         }
 
         let localVarPath = `/api/surveyDistributionResponse/listParticipatedDistributions`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<RecipientSurveyDistributionListItemDto>>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public apiSurveyDistributionResponseListPendingDistributionsPost(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<RecipientSurveyDistributionListItemDto>>;
+    public apiSurveyDistributionResponseListPendingDistributionsPost(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<RecipientSurveyDistributionListItemDto>>>;
+    public apiSurveyDistributionResponseListPendingDistributionsPost(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<RecipientSurveyDistributionListItemDto>>>;
+    public apiSurveyDistributionResponseListPendingDistributionsPost(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/plain',
+            'application/json',
+            'text/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/surveyDistributionResponse/listPendingDistributions`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<RecipientSurveyDistributionListItemDto>>('post', `${basePath}${localVarPath}`,
             {

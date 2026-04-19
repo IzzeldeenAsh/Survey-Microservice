@@ -7,10 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { SurveyRatingBreakdownDto } from './survey-rating-breakdown-dto';
 
 
 export interface SurveyRatingQuestionSummaryDto { 
     responsesCount: number;
     average: number;
+    ratingMax: number;
+    topRatings?: Array<SurveyRatingBreakdownDto>;
 }
 

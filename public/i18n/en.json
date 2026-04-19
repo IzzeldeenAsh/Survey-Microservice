@@ -1,0 +1,69 @@
+{
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "switchTo": "Switch language"
+  },
+  "survey": {
+    "eyebrow": "Survey",
+    "categoryBadge": "Survey Distribution Category",
+    "fallbackTitle": "Survey",
+    "untitledQuestion": "Untitled question",
+    "fallbackChoice": "Choice",
+    "loading": "Loading survey...",
+    "opening": "Opening survey link...",
+    "restoring": "Restoring your survey...",
+    "sectionLabel": "Section {{index}}",
+    "sectionFallback": "Survey Section",
+    "alreadySubmitted": "This survey was already submitted and can still be updated.",
+    "restoredSession": "Your survey was restored from the current browser session.",
+    "submitError": "Failed to submit your survey. Please try again.",
+    "mandatory": "Mandatory",
+    "optional": "Optional",
+    "veryDissatisfied": "Very Dissatisfied",
+    "verySatisfied": "Very Satisfied",
+    "textPlaceholder": "Share your answer here...",
+    "uploading": "Uploading…",
+    "attachFile": "+ Attach a file",
+    "filesAttached": "{{count}} of {{max}} files attached",
+    "removeAttachment": "Remove {{name}}",
+    "noVisibleQuestions": "No visible questions are available in this section right now.",
+    "noSections": "This survey does not currently contain any sections to display.",
+    "nextSection": "Next Section",
+    "previousSection": "Previous section",
+    "nextSectionAria": "Next section",
+    "setRating": "Set rating to {{value}}",
+    "submitting": "Submitting…",
+    "submit": "Submit Survey"
+  },
+  "status": {
+    "invalid": {
+      "title": "Invalid Survey Link | Survey Frontend",
+      "eyebrow": "Link state",
+      "badge": "Invalid link",
+      "heading": "This survey link can't be used.",
+      "description": "This link may be invalid, expired, revoked, or already used. Please contact the sender if you need a new survey invitation."
+    },
+    "completed": {
+      "title": "Survey Completed | Survey Frontend",
+      "eyebrow": "Submission state",
+      "badge": "Submitted",
+      "heading": "This survey has already been submitted.",
+      "description": "Your responses are already locked and there is nothing else you need to do for this survey."
+    },
+    "error": {
+      "title": "Survey Error | Survey Frontend",
+      "eyebrow": "Recovery state",
+      "badge": "Server or session error",
+      "heading": "We couldn't open this survey.",
+      "description": "An unexpected problem interrupted the survey flow. Please try opening the original survey link again. If the problem continues, contact the sender."
+    }
+  },
+  "route": {
+    "surveyStart": "Start Survey | Survey Frontend",
+    "uploadTest": "Attachment Upload Test"
+  },
+  "app": {
+    "title": "SurveyMicroFrontend"
+  }
+}

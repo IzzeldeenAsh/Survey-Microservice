@@ -1,0 +1,80 @@
+@let files = selectedFiles();
+@let uploading = isUploading();
+@let s3 = s3Results();
+@let dtos = attachments();
+@let entries = logs();
+
+<div class="page">
+  <header class="page__header">
+    <h1>Attachment Upload Test</h1>
+    <p>
+      Picks files, uploads them directly to Cloudflare R2 via <code>AwsService</code>,
+      then calls <code>/api/Upload/PrepareUploadedFile</code> to get the
+      <code>AttachmentModelDTO</code>. Everything is logged below and in the console.
+    </p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__row">
+      <input
+        type="file"
+        multiple
+        [disabled]="uploading"
+        (change)="onFilesSelected($event)"
+      />
+      <button type="button" [disabled]="!files.length || uploading" (click)="upload()">
+        {{ uploading ? 'Uploading…' : 'Upload' }}
+      </button>
+      <button type="button" class="ghost" [disabled]="uploading" (click)="clear()">
+        Clear
+      </button>
+    </div>
+
+    @if (files.length) {
+      <ul class="file-list">
+        @for (file of files; track file.name + file.size) {
+          <li>
+            <strong>{{ file.name }}</strong>
+            <span>{{ file.type || 'unknown' }} · {{ file.size }} bytes</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (s3.length) {
+    <section class="panel">
+      <h2>S3 Upload Results</h2>
+      <pre>{{ stringify(s3) }}</pre>
+    </section>
+  }
+
+  @if (dtos.length) {
+    <section class="panel">
+      <h2>AttachmentModelDTO (from backend)</h2>
+      <pre>{{ stringify(dtos) }}</pre>
+    </section>
+  }
+
+  <section class="panel">
+    <h2>Logs</h2>
+    @if (!entries.length) {
+      <p class="muted">No activity yet.</p>
+    } @else {
+      <ol class="logs">
+        @for (entry of entries; track entry.timestamp + entry.message) {
+          <li [class]="'log log--' + entry.level">
+            <div class="log__head">
+              <span class="log__time">{{ entry.timestamp }}</span>
+              <span class="log__level">{{ entry.level }}</span>
+              <span class="log__msg">{{ entry.message }}</span>
+            </div>
+            @if (entry.data !== undefined) {
+              <pre>{{ stringify(entry.data) }}</pre>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </section>
+</div>

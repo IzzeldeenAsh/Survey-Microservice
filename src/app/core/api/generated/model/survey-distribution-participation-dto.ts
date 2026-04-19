@@ -13,6 +13,7 @@ export interface SurveyDistributionParticipationDto {
     distributionId: string;
     targetAudienceType: number;
     totalRecipients: number;
+    totalOpened: number;
     totalResponded: number;
     participationPercent: number;
 }

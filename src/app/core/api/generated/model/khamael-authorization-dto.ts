@@ -12,7 +12,6 @@ import { KhamaelAuthorizationOrgUnitDTO } from './khamael-authorization-org-unit
 
 export interface KhamaelAuthorizationDTO { 
     khamaelUserId?: string;
-    authorizationType: number;
     orgUnits?: Array<KhamaelAuthorizationOrgUnitDTO>;
 }
 

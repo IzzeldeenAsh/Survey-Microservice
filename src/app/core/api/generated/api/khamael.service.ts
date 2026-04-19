@@ -62,7 +62,6 @@ export interface ApiKhamaelAttendancePostRequestParams {
 
 export interface ApiKhamaelAuthorizationDeleteRequestParams {
     khamaelUserId?: string;
-    authorizationType?: number;
     subjectId?: number;
     khamaelOrgUnitId?: number;
 }
@@ -286,15 +285,12 @@ export class KhamaelService extends BaseService {
     public apiKhamaelAuthorizationDelete(requestParameters?: ApiKhamaelAuthorizationDeleteRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
     public apiKhamaelAuthorizationDelete(requestParameters?: ApiKhamaelAuthorizationDeleteRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const khamaelUserId = requestParameters?.khamaelUserId;
-        const authorizationType = requestParameters?.authorizationType;
         const subjectId = requestParameters?.subjectId;
         const khamaelOrgUnitId = requestParameters?.khamaelOrgUnitId;
 
         let localVarQueryParameters = new HttpParams({encoder: this.encoder});
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>khamaelUserId, 'KhamaelUserId');
-        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
-          <any>authorizationType, 'AuthorizationType');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>subjectId, 'SubjectId');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,

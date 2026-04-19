@@ -1,20 +1,25 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { SurveyLinksSecurityApiService } from '../../../../core/api/survey-links-security-api.service';
+import { SurveyDistributionResponseService } from '../../../../core/api/generated/api/survey-distribution-response.service';
+import { AttachmentDto } from '../../../../core/api/generated/model/attachment-dto';
 import { RecipientSurveyChoiceDto } from '../../../../core/api/generated/model/recipient-survey-choice-dto';
 import { RecipientSurveyConditionDto } from '../../../../core/api/generated/model/recipient-survey-condition-dto';
 import { RecipientSurveyDistributionDto } from '../../../../core/api/generated/model/recipient-survey-distribution-dto';
 import { RecipientSurveyExistingAnswerDto } from '../../../../core/api/generated/model/recipient-survey-existing-answer-dto';
 import { RecipientSurveyQuestionDto } from '../../../../core/api/generated/model/recipient-survey-question-dto';
 import { RecipientSurveySectionDto } from '../../../../core/api/generated/model/recipient-survey-section-dto';
+import { SubmitSurveyAnswerDto } from '../../../../core/api/generated/model/submit-survey-answer-dto';
+import { SubmitSurveyResponseDto } from '../../../../core/api/generated/model/submit-survey-response-dto';
 import { SurveySessionBootstrapDto } from '../../../../core/api/generated/model/survey-session-bootstrap-dto';
 import { SurveySessionStoreService } from '../../services/survey-session-store.service';
 import { AwsService } from '../../../../core/services/aws.service';
 import { AttachmentModelDTO } from '../../../../core/api/generated/model/attachment-model-dto';
 
 type QuestionAnswerState = {
-  attachmentIds: number[];
+  attachments: AttachmentDto[];
   ratingValue: number | null;
   selectedChoiceIds: string[];
   textValue: string;
@@ -32,6 +37,7 @@ const QUESTION_TYPE = {
 
 @Component({
   selector: 'app-survey-start-page',
+  imports: [TranslatePipe],
   templateUrl: './survey-start-page.component.html',
   styleUrl: './survey-start-page.component.css',
 })
@@ -39,17 +45,19 @@ export class SurveyStartPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(SurveyLinksSecurityApiService);
+  private readonly responseApi = inject(SurveyDistributionResponseService);
   private readonly sessionStore = inject(SurveySessionStoreService);
   private readonly awsService = inject(AwsService);
 
   protected readonly pageState = signal<StartPageState>('loading');
-  protected readonly loadingLabel = signal('Loading survey...');
+  protected readonly loadingLabel = signal('survey.loading');
   protected readonly bootstrap = signal<SurveySessionBootstrapDto | null>(null);
   protected readonly answers = signal<Record<string, QuestionAnswerState>>({});
   protected readonly currentSectionIndex = signal(0);
   protected readonly resumedSession = signal(false);
   protected readonly uploadingQuestions = signal<Set<string>>(new Set());
-  protected readonly questionAttachmentDtos = signal<Record<string, AttachmentModelDTO[]>>({});
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
   protected readonly distribution = computed(
     () => this.bootstrap()?.distribution ?? null,
@@ -77,10 +85,10 @@ export class SurveyStartPageComponent {
     const section = this.currentSection();
 
     if (!section) {
-      return 'Survey Section';
+      return 'survey.sectionFallback';
     }
 
-    return `Section ${this.currentSectionIndex() + 1}`;
+    return 'survey.sectionLabel';
   });
   protected readonly introHtml = computed(
     () => this.distribution()?.introHtml?.trim() ?? '',
@@ -90,11 +98,11 @@ export class SurveyStartPageComponent {
     const distribution = this.distribution();
 
     if (bootstrap?.isSubmitted && distribution?.canEditSubmission) {
-      return 'This survey was already submitted and can still be updated.';
+      return 'survey.alreadySubmitted';
     }
 
     if (this.resumedSession()) {
-      return 'Your survey was restored from the current browser session.';
+      return 'survey.restoredSession';
     }
 
     return '';
@@ -106,6 +114,21 @@ export class SurveyStartPageComponent {
   protected readonly canGoToNextSection = computed(() => {
     const sections = this.sections();
     return this.currentSectionIndex() < sections.length - 1;
+  });
+  protected readonly canSubmit = computed(() => {
+    if (this.submitting()) return false;
+    const distribution = this.distribution();
+    if (!distribution?.sections?.length) return false;
+
+    const allAnswers = this.answers();
+    for (const section of distribution.sections) {
+      for (const question of section.questions ?? []) {
+        if (!question.isMandatory) continue;
+        if (!this.isQuestionVisibleIn(question, allAnswers)) continue;
+        if (!this.hasAnswerFor(question, allAnswers)) return false;
+      }
+    }
+    return true;
   });
 
   constructor() {
@@ -140,7 +163,7 @@ export class SurveyStartPageComponent {
   protected getQuestionAnswer(questionId: string): QuestionAnswerState {
     return (
       this.answers()[questionId] ?? {
-        attachmentIds: [],
+        attachments: [],
         ratingValue: null,
         selectedChoiceIds: [],
         textValue: '',
@@ -200,8 +223,8 @@ export class SurveyStartPageComponent {
     this.updateAnswer(questionId, { textValue });
   }
 
-  protected getQuestionAttachmentDtos(questionId: string): AttachmentModelDTO[] {
-    return this.questionAttachmentDtos()[questionId] ?? [];
+  protected getQuestionAttachments(questionId: string): AttachmentDto[] {
+    return this.getQuestionAnswer(questionId).attachments;
   }
 
   protected isQuestionUploading(questionId: string): boolean {
@@ -211,15 +234,9 @@ export class SurveyStartPageComponent {
   protected canUploadMore(question: RecipientSurveyQuestionDto): boolean {
     if (!question.maxAttachments) return true;
     return (
-      this.getQuestionAnswer(question.questionInstanceId).attachmentIds.length <
+      this.getQuestionAnswer(question.questionInstanceId).attachments.length <
       question.maxAttachments
     );
-  }
-
-  protected getPreExistingAttachmentCount(questionId: string): number {
-    const totalIds = this.getQuestionAnswer(questionId).attachmentIds.length;
-    const uploadedCount = this.getQuestionAttachmentDtos(questionId).length;
-    return Math.max(0, totalIds - uploadedCount);
   }
 
   protected async uploadAttachmentFiles(
@@ -230,8 +247,10 @@ export class SurveyStartPageComponent {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
 
-    const currentIds = this.getQuestionAnswer(questionId).attachmentIds;
-    const remaining = maxAttachments ? maxAttachments - currentIds.length : Infinity;
+    const currentAttachments = this.getQuestionAnswer(questionId).attachments;
+    const remaining = maxAttachments
+      ? maxAttachments - currentAttachments.length
+      : Infinity;
     const filesToUpload = Array.from(input.files).slice(0, remaining);
 
     if (!filesToUpload.length) return;
@@ -240,19 +259,14 @@ export class SurveyStartPageComponent {
 
     try {
       const fileWrappers = filesToUpload.map((f) => ({ file: { rawFile: f } }));
-      const attachments = await this.awsService.uploadFileToB12(fileWrappers);
+      const uploaded = await this.awsService.uploadFileToB12(fileWrappers);
+      const newAttachments = uploaded.map((model) =>
+        this.toAttachmentDto(model),
+      );
 
-      console.log('[Upload] Attachments registered for question', questionId, attachments);
-
-      this.questionAttachmentDtos.update((current) => ({
-        ...current,
-        [questionId]: [...(current[questionId] ?? []), ...attachments],
-      }));
-
-      const newIds = attachments
-        .map((a) => a.id)
-        .filter((id): id is number => id != null);
-      this.updateAnswer(questionId, { attachmentIds: [...currentIds, ...newIds] });
+      this.updateAnswer(questionId, {
+        attachments: [...currentAttachments, ...newAttachments],
+      });
     } catch (error) {
       console.error('[Upload] Failed for question', questionId, error);
     } finally {
@@ -265,16 +279,27 @@ export class SurveyStartPageComponent {
     }
   }
 
-  protected removeAttachmentFromQuestion(questionId: string, attachmentId: number): void {
-    this.questionAttachmentDtos.update((current) => ({
-      ...current,
-      [questionId]: (current[questionId] ?? []).filter((a) => a.id !== attachmentId),
-    }));
-
-    const currentIds = this.getQuestionAnswer(questionId).attachmentIds;
+  protected removeAttachmentAt(questionId: string, index: number): void {
+    const current = this.getQuestionAnswer(questionId).attachments;
+    if (index < 0 || index >= current.length) return;
     this.updateAnswer(questionId, {
-      attachmentIds: currentIds.filter((id) => id !== attachmentId),
+      attachments: current.filter((_, i) => i !== index),
     });
+  }
+
+  private toAttachmentDto(model: AttachmentModelDTO): AttachmentDto {
+    const raw = model as AttachmentModelDTO & { originalFileUrl?: string };
+    return {
+      fileName: model.fileName,
+      fileUploadName: model.fileUploadName,
+      fileSizeInBytes: model.fileSizeInBytes,
+      fileURL: model.fileURL,
+      fileThumbnailURL: model.fileThumbnailURL,
+      fileType: model.fileType,
+      fileExtension: model.fileExtension,
+      fileContentType: model.fileContentType,
+      originalFileUrl: raw.originalFileUrl ?? model.originalFileURL,
+    };
   }
 
   protected goToSection(sectionIndex: number): void {
@@ -301,12 +326,121 @@ export class SurveyStartPageComponent {
     this.currentSectionIndex.update((currentIndex) => currentIndex + 1);
   }
 
+  protected async submitSurvey(): Promise<void> {
+    if (!this.canSubmit()) return;
+
+    const distribution = this.distribution();
+    if (!distribution) return;
+
+    this.submitting.set(true);
+    this.submitError.set(null);
+
+    try {
+      const allAnswers = this.answers();
+      const payload: SubmitSurveyResponseDto = {
+        distributionId: distribution.distributionId,
+        answers: (distribution.sections ?? []).flatMap((section) =>
+          (section.questions ?? [])
+            .filter((question) => this.isQuestionVisibleIn(question, allAnswers))
+            .map((question) => this.buildAnswerPayload(question, allAnswers)),
+        ),
+      };
+
+      await firstValueFrom(
+        this.responseApi.apiSurveyDistributionResponseSubmitResponsePost({
+          input: payload,
+        }),
+      );
+
+      this.sessionStore.clearToken();
+      await this.router.navigate(['/survey/completed'], { replaceUrl: true });
+    } catch (error) {
+      this.submitError.set(
+        this.extractErrorMessage(error) || 'survey.submitError',
+      );
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  private buildAnswerPayload(
+    question: RecipientSurveyQuestionDto,
+    allAnswers: Record<string, QuestionAnswerState>,
+  ): SubmitSurveyAnswerDto {
+    const answer = allAnswers[question.questionInstanceId] ?? {
+      attachments: [],
+      ratingValue: null,
+      selectedChoiceIds: [],
+      textValue: '',
+    };
+
+    const payload: SubmitSurveyAnswerDto = {
+      questionInstanceId: question.questionInstanceId,
+    };
+
+    if (this.isRatingQuestion(question) && answer.ratingValue != null) {
+      payload.ratingValue = answer.ratingValue;
+    }
+    if (this.isTextQuestion(question) && answer.textValue.trim().length) {
+      payload.textValue = answer.textValue;
+    }
+    if (
+      (this.isSingleChoiceQuestion(question) ||
+        this.isMultipleChoiceQuestion(question)) &&
+      answer.selectedChoiceIds.length
+    ) {
+      payload.selectedChoiceIds = [...answer.selectedChoiceIds];
+    }
+    if (this.isAttachmentQuestion(question) && answer.attachments.length) {
+      payload.attachments = [...answer.attachments];
+    }
+
+    return payload;
+  }
+
+  private isQuestionVisibleIn(
+    question: RecipientSurveyQuestionDto,
+    allAnswers: Record<string, QuestionAnswerState>,
+  ): boolean {
+    const conditions = question.conditions ?? [];
+    if (!conditions.length) return true;
+
+    return conditions.every((condition) => {
+      const selectedChoiceIds =
+        allAnswers[condition.dependsOnQuestionInstanceId]?.selectedChoiceIds ?? [];
+      const triggerChoiceIds = condition.triggerChoiceIds ?? [];
+      if (!triggerChoiceIds.length) return true;
+      return selectedChoiceIds.some((choiceId) =>
+        triggerChoiceIds.includes(choiceId),
+      );
+    });
+  }
+
+  private hasAnswerFor(
+    question: RecipientSurveyQuestionDto,
+    allAnswers: Record<string, QuestionAnswerState>,
+  ): boolean {
+    const answer = allAnswers[question.questionInstanceId];
+    if (!answer) return false;
+
+    if (this.isRatingQuestion(question)) return answer.ratingValue != null;
+    if (
+      this.isSingleChoiceQuestion(question) ||
+      this.isMultipleChoiceQuestion(question)
+    ) {
+      return answer.selectedChoiceIds.length > 0;
+    }
+    if (this.isTextQuestion(question)) return answer.textValue.trim().length > 0;
+    if (this.isAttachmentQuestion(question)) return answer.attachments.length > 0;
+    return true;
+  }
+
   private async initialize(): Promise<void> {
     const distributionKey = this.route.snapshot.queryParamMap.get('dk')?.trim();
 
     try {
       if (distributionKey) {
-        this.loadingLabel.set('Opening survey link...');
+        this.loadingLabel.set('survey.opening');
         const bootstrap = await firstValueFrom(this.api.redeem(distributionKey));
         const bootstrapSucceeded = await this.handleResolvedBootstrap(bootstrap, false);
 
@@ -326,7 +460,7 @@ export class SurveyStartPageComponent {
         return;
       }
 
-      this.loadingLabel.set('Restoring your survey...');
+      this.loadingLabel.set('survey.restoring');
       const bootstrap = await firstValueFrom(
         this.api.getCurrentBootstrap(surveySessionToken),
       );
@@ -378,7 +512,7 @@ export class SurveyStartPageComponent {
     answer?: RecipientSurveyExistingAnswerDto,
   ): QuestionAnswerState {
     return {
-      attachmentIds: [...(answer?.attachmentIds ?? [])],
+      attachments: [...(answer?.attachments ?? [])],
       ratingValue: answer?.ratingValue ?? null,
       selectedChoiceIds: [...(answer?.selectedChoiceIds ?? [])],
       textValue: answer?.textValue ?? '',
@@ -471,7 +605,7 @@ export class SurveyStartPageComponent {
 
         if (!isVisible) {
           nextAnswers[question.questionInstanceId] = {
-            attachmentIds: [],
+            attachments: [],
             ratingValue: null,
             selectedChoiceIds: [],
             textValue: '',

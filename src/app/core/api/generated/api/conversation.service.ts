@@ -93,6 +93,7 @@ export interface ApiConversationGetRequestParams {
     sectionId?: number;
     gradeId?: number;
     classId?: number;
+    categoryType?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
     messageId?: number;
     participantId?: number;
     initiatorId?: number;
@@ -648,6 +649,7 @@ export class ConversationService extends BaseService {
         const sectionId = requestParameters?.sectionId;
         const gradeId = requestParameters?.gradeId;
         const classId = requestParameters?.classId;
+        const categoryType = requestParameters?.categoryType;
         const messageId = requestParameters?.messageId;
         const participantId = requestParameters?.participantId;
         const initiatorId = requestParameters?.initiatorId;
@@ -679,6 +681,8 @@ export class ConversationService extends BaseService {
           <any>gradeId, 'GradeId');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>classId, 'ClassId');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>categoryType, 'CategoryType');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>messageId, 'MessageId');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,

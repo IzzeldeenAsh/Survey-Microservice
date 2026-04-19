@@ -25,46 +25,43 @@ export const SURVEY_ROUTES: Routes = [
       },
       {
         path: 'start',
-        title: 'Start Survey | Survey Frontend',
+        title: 'route.surveyStart',
         loadComponent: loadSurveyStartPage,
       },
       {
         path: 'invalid',
-        title: 'Invalid Survey Link | Survey Frontend',
+        title: 'status.invalid.title',
         loadComponent: loadSurveyStatusPage,
         data: {
-          eyebrow: 'Link state',
-          badge: 'Invalid link',
+          eyebrow: 'status.invalid.eyebrow',
+          badge: 'status.invalid.badge',
           tone: 'warning',
-          title: "This survey link can't be used.",
-          description:
-            'This link may be invalid, expired, revoked, or already used. Please contact the sender if you need a new survey invitation.',
+          title: 'status.invalid.heading',
+          description: 'status.invalid.description',
         },
       },
       {
         path: 'completed',
-        title: 'Survey Completed | Survey Frontend',
+        title: 'status.completed.title',
         loadComponent: loadSurveyStatusPage,
         data: {
-          eyebrow: 'Submission state',
-          badge: 'Submitted',
+          eyebrow: 'status.completed.eyebrow',
+          badge: 'status.completed.badge',
           tone: 'success',
-          title: 'This survey has already been submitted.',
-          description:
-            'Your responses are already locked and there is nothing else you need to do for this survey.',
+          title: 'status.completed.heading',
+          description: 'status.completed.description',
         },
       },
       {
         path: 'error',
-        title: 'Survey Error | Survey Frontend',
+        title: 'status.error.title',
         loadComponent: loadSurveyStatusPage,
         data: {
-          eyebrow: 'Recovery state',
-          badge: 'Server or session error',
+          eyebrow: 'status.error.eyebrow',
+          badge: 'status.error.badge',
           tone: 'danger',
-          title: "We couldn't open this survey.",
-          description:
-            'An unexpected problem interrupted the survey flow. Please try opening the original survey link again. If the problem continues, contact the sender.',
+          title: 'status.error.heading',
+          description: 'status.error.description',
         },
       },
       {

@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "generate:api": "npx openapi-generator-cli generate -i openapi/swagger.json -g typescript-angular -o src/app/core/api/generated -c openapi-generator-config.json"
+    "generate:api": "npx @openapitools/openapi-generator-cli generate -i openapi/swagger.json -g typescript-angular -o src/app/core/api/generated -c openapi-generator-config.json"
   },
   "private": true,
   "packageManager": "npm@10.9.4",
@@ -18,6 +18,8 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
     "aws-sdk": "^2.1692.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
@@ -29,9 +31,9 @@
     "@angular/compiler-cli": "^21.2.0",
     "@openapitools/openapi-generator-cli": "^2.31.0",
     "@tailwindcss/postcss": "^4.1.12",
+    "@types/uuid": "^10.0.0",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
-    "@types/uuid": "^10.0.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",

@@ -105,7 +105,7 @@ export class AwsService {
   }): Promise<AttachmentModelDTO> {
     const response = await firstValueFrom(
       this.http.post<AttachmentModelDTO>(
-        `${environment.apiBaseUrl}/api/Upload/PrepareUploadedFile`,
+        `${environment.apiBaseUrl}/api/Upload/PrepareUploadedFileSurveys`,
         formData,
       ),
     );

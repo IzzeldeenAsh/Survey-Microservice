@@ -31,6 +31,8 @@ import { GetSurveysInputDto } from '../model/get-surveys-input-dto';
 // @ts-ignore
 import { ListSurveysResponseDto } from '../model/list-surveys-response-dto';
 // @ts-ignore
+import { PagedResultDtoSurveyDistributionParticipationTableRowDto } from '../model/paged-result-dto-survey-distribution-participation-table-row-dto';
+// @ts-ignore
 import { RunSurveyLinksSecurityFullCycleTestDto } from '../model/run-survey-links-security-full-cycle-test-dto';
 // @ts-ignore
 import { ShareSurveyDto } from '../model/share-survey-dto';
@@ -54,6 +56,8 @@ import { SurveySectionComparisonDto } from '../model/survey-section-comparison-d
 import { SurveySectionComparisonExportRequestDto } from '../model/survey-section-comparison-export-request-dto';
 // @ts-ignore
 import { SurveySectionResultsDto } from '../model/survey-section-results-dto';
+// @ts-ignore
+import { SurveySectionResultsOptionDto } from '../model/survey-section-results-option-dto';
 // @ts-ignore
 import { SurveySectionTopicOptionDto } from '../model/survey-section-topic-option-dto';
 // @ts-ignore
@@ -112,6 +116,23 @@ export interface ApiSurveyDistributionParticipationByDistributionIdGetRequestPar
     distributionId: string;
 }
 
+export interface ApiSurveyDistributionParticipationTableGetRequestParams {
+    distributionId?: string;
+    searchText?: string;
+    participated?: boolean;
+    sorting?: string;
+    skipCount?: number;
+    maxResultCount?: number;
+}
+
+export interface ApiSurveyDistributionSectionsByDistributionIdGetRequestParams {
+    distributionId: string;
+}
+
+export interface ApiSurveyExportDistributionParticipationByDistributionIdPostRequestParams {
+    distributionId: string;
+}
+
 export interface ApiSurveyExportQuestionResultsPostRequestParams {
     distributionId?: string;
     sectionId?: string;
@@ -141,10 +162,6 @@ export interface ApiSurveyListPostRequestParams {
 
 export interface ApiSurveyPostRequestParams {
     input?: CreateSurveyDto;
-}
-
-export interface ApiSurveyPreviewBySurveyIdPostRequestParams {
-    surveyId: string;
 }
 
 export interface ApiSurveyPutRequestParams {
@@ -824,6 +841,191 @@ export class SurveyService extends BaseService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
+    public apiSurveyDistributionParticipationTableGet(requestParameters?: ApiSurveyDistributionParticipationTableGetRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<PagedResultDtoSurveyDistributionParticipationTableRowDto>;
+    public apiSurveyDistributionParticipationTableGet(requestParameters?: ApiSurveyDistributionParticipationTableGetRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PagedResultDtoSurveyDistributionParticipationTableRowDto>>;
+    public apiSurveyDistributionParticipationTableGet(requestParameters?: ApiSurveyDistributionParticipationTableGetRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PagedResultDtoSurveyDistributionParticipationTableRowDto>>;
+    public apiSurveyDistributionParticipationTableGet(requestParameters?: ApiSurveyDistributionParticipationTableGetRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const distributionId = requestParameters?.distributionId;
+        const searchText = requestParameters?.searchText;
+        const participated = requestParameters?.participated;
+        const sorting = requestParameters?.sorting;
+        const skipCount = requestParameters?.skipCount;
+        const maxResultCount = requestParameters?.maxResultCount;
+
+        let localVarQueryParameters = new HttpParams({encoder: this.encoder});
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>distributionId, 'DistributionId');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>searchText, 'SearchText');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>participated, 'Participated');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>sorting, 'Sorting');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>skipCount, 'SkipCount');
+        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+          <any>maxResultCount, 'MaxResultCount');
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/plain',
+            'application/json',
+            'text/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/survey/distributionParticipationTable`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<PagedResultDtoSurveyDistributionParticipationTableRowDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @param requestParameters
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public apiSurveyDistributionSectionsByDistributionIdGet(requestParameters: ApiSurveyDistributionSectionsByDistributionIdGetRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SurveySectionResultsOptionDto>>;
+    public apiSurveyDistributionSectionsByDistributionIdGet(requestParameters: ApiSurveyDistributionSectionsByDistributionIdGetRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SurveySectionResultsOptionDto>>>;
+    public apiSurveyDistributionSectionsByDistributionIdGet(requestParameters: ApiSurveyDistributionSectionsByDistributionIdGetRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SurveySectionResultsOptionDto>>>;
+    public apiSurveyDistributionSectionsByDistributionIdGet(requestParameters: ApiSurveyDistributionSectionsByDistributionIdGetRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const distributionId = requestParameters?.distributionId;
+        if (distributionId === null || distributionId === undefined) {
+            throw new Error('Required parameter distributionId was null or undefined when calling apiSurveyDistributionSectionsByDistributionIdGet.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/plain',
+            'application/json',
+            'text/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/survey/distributionSections/${this.configuration.encodeParam({name: "distributionId", value: distributionId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<SurveySectionResultsOptionDto>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @param requestParameters
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public apiSurveyExportDistributionParticipationByDistributionIdPost(requestParameters: ApiSurveyExportDistributionParticipationByDistributionIdPostRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<string>;
+    public apiSurveyExportDistributionParticipationByDistributionIdPost(requestParameters: ApiSurveyExportDistributionParticipationByDistributionIdPostRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
+    public apiSurveyExportDistributionParticipationByDistributionIdPost(requestParameters: ApiSurveyExportDistributionParticipationByDistributionIdPostRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
+    public apiSurveyExportDistributionParticipationByDistributionIdPost(requestParameters: ApiSurveyExportDistributionParticipationByDistributionIdPostRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const distributionId = requestParameters?.distributionId;
+        if (distributionId === null || distributionId === undefined) {
+            throw new Error('Required parameter distributionId was null or undefined when calling apiSurveyExportDistributionParticipationByDistributionIdPost.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/plain',
+            'application/json',
+            'text/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/survey/exportDistributionParticipation/${this.configuration.encodeParam({name: "distributionId", value: distributionId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<string>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @param requestParameters
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
     public apiSurveyExportQuestionResultsPost(requestParameters?: ApiSurveyExportQuestionResultsPostRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<string>;
     public apiSurveyExportQuestionResultsPost(requestParameters?: ApiSurveyExportQuestionResultsPostRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
     public apiSurveyExportQuestionResultsPost(requestParameters?: ApiSurveyExportQuestionResultsPostRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
@@ -1246,62 +1448,6 @@ export class SurveyService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: input,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                transferCache: localVarTransferCache,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * @param requestParameters
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public apiSurveyPreviewBySurveyIdPost(requestParameters: ApiSurveyPreviewBySurveyIdPostRequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<SurveyDetailsDto>;
-    public apiSurveyPreviewBySurveyIdPost(requestParameters: ApiSurveyPreviewBySurveyIdPostRequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SurveyDetailsDto>>;
-    public apiSurveyPreviewBySurveyIdPost(requestParameters: ApiSurveyPreviewBySurveyIdPostRequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SurveyDetailsDto>>;
-    public apiSurveyPreviewBySurveyIdPost(requestParameters: ApiSurveyPreviewBySurveyIdPostRequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain' | 'application/json' | 'text/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const surveyId = requestParameters?.surveyId;
-        if (surveyId === null || surveyId === undefined) {
-            throw new Error('Required parameter surveyId was null or undefined when calling apiSurveyPreviewBySurveyIdPost.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'text/plain',
-            'application/json',
-            'text/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/survey/preview/${this.configuration.encodeParam({name: "surveyId", value: surveyId, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: "uuid"})}`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<SurveyDetailsDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

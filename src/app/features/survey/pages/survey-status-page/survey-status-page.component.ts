@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 type StatusTone = 'neutral' | 'success' | 'warning' | 'danger';
 
@@ -12,13 +13,13 @@ const badgeToneClasses: Record<StatusTone, string> = {
 
 @Component({
   selector: 'app-survey-status-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './survey-status-page.component.html',
   styleUrl: './survey-status-page.component.css',
 })
 export class SurveyStatusPageComponent {
-  readonly eyebrow = input('Survey state');
-  readonly badge = input('Route ready');
+  readonly eyebrow = input('status.fallback.eyebrow');
+  readonly badge = input('status.fallback.badge');
   readonly tone = input<StatusTone>('neutral');
   readonly title = input.required<string>();
   readonly description = input.required<string>();
