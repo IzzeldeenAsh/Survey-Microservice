@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { SurveyLinksSecurityApiService } from '../../../../core/api/survey-links-security-api.service';
-import { SurveyDistributionResponseService } from '../../../../core/api/generated/api/survey-distribution-response.service';
+import { SurveyDistributionLinksSecurityService } from '../../../../core/api/generated/api/survey-distribution-links-security.service';
 import { AttachmentDto } from '../../../../core/api/generated/model/attachment-dto';
 import { RecipientSurveyChoiceDto } from '../../../../core/api/generated/model/recipient-survey-choice-dto';
 import { RecipientSurveyConditionDto } from '../../../../core/api/generated/model/recipient-survey-condition-dto';
@@ -12,7 +12,7 @@ import { RecipientSurveyExistingAnswerDto } from '../../../../core/api/generated
 import { RecipientSurveyQuestionDto } from '../../../../core/api/generated/model/recipient-survey-question-dto';
 import { RecipientSurveySectionDto } from '../../../../core/api/generated/model/recipient-survey-section-dto';
 import { SubmitSurveyAnswerDto } from '../../../../core/api/generated/model/submit-survey-answer-dto';
-import { SubmitSurveyResponseDto } from '../../../../core/api/generated/model/submit-survey-response-dto';
+import { SubmitSurveySessionResponseDto } from '../../../../core/api/generated/model/submit-survey-session-response-dto';
 import { SurveySessionBootstrapDto } from '../../../../core/api/generated/model/survey-session-bootstrap-dto';
 import { SurveySessionStoreService } from '../../services/survey-session-store.service';
 import { AwsService } from '../../../../core/services/aws.service';
@@ -45,7 +45,7 @@ export class SurveyStartPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(SurveyLinksSecurityApiService);
-  private readonly responseApi = inject(SurveyDistributionResponseService);
+  private readonly responseApi = inject(SurveyDistributionLinksSecurityService);
   private readonly sessionStore = inject(SurveySessionStoreService);
   private readonly awsService = inject(AwsService);
 
@@ -337,8 +337,8 @@ export class SurveyStartPageComponent {
 
     try {
       const allAnswers = this.answers();
-      const payload: SubmitSurveyResponseDto = {
-        distributionId: distribution.distributionId,
+      const payload: SubmitSurveySessionResponseDto = {
+        surveySessionToken: this.sessionStore.getToken() ?? undefined,
         answers: (distribution.sections ?? []).flatMap((section) =>
           (section.questions ?? [])
             .filter((question) => this.isQuestionVisibleIn(question, allAnswers))
@@ -347,7 +347,7 @@ export class SurveyStartPageComponent {
       };
 
       await firstValueFrom(
-        this.responseApi.apiSurveyDistributionResponseSubmitResponsePost({
+        this.responseApi.apiSurveyDistributionLinksSecuritySubmitPost({
           input: payload,
         }),
       );

@@ -1,5 +1,5 @@
 export const environment = {
-  production: true,
+  production: false,
   apiBaseUrl: 'https://localhost:44349',
   r2: {
     accessKeyId: '49d3dc8755e68aa50e153d15c7ce7fb4',

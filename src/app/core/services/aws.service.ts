@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { SKIP_AUTH } from '../api/survey-session-auth.interceptor';
 import * as AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../../../environments/environment';
@@ -107,6 +109,12 @@ export class AwsService {
       this.http.post<AttachmentModelDTO>(
         `${environment.apiBaseUrl}/api/Upload/PrepareUploadedFileSurveys`,
         formData,
+        { context: new HttpContext().set(SKIP_AUTH, true) },
+      ).pipe(
+        catchError((err) => {
+          console.error('[AwsService] PrepareUploadedFileSurveys error body:', err.error);
+          throw err;
+        }),
       ),
     );
     console.log('[AwsService] AttachmentModelDTO received:', response);
